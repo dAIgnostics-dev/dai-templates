@@ -294,6 +294,21 @@ $if(graphics)$
 % margins by default, and it is still possible to overwrite the defaults
 % using explicit options in \includegraphics[width, height, ...]{}
 \setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Pandoc >= 3.2 wraps images without an explicit size in \pandocbounded{...};
+% define it (same as pandoc's default template) unless something already did.
+\makeatletter
+\@ifundefined{pandocbounded}{%
+  \newsavebox\pandoc@box
+  \newcommand*\pandocbounded[1]{% scale to fit text width and height, never enlarge
+    \sbox\pandoc@box{#1}%
+    \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+    \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+    \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi
+    \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+    \else\usebox{\pandoc@box}%
+    \fi}%
+}{}
+\makeatother
 % Set default figure placement to htbp
 \makeatletter
 \def\fps@figure{htbp}
