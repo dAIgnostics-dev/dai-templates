@@ -1,0 +1,203 @@
+%% ======================================================================
+%%  dAIgnostics letter / memorandum - pandoc -> PDF (XeLaTeX)
+%%  Same look as ../pandoc-document: TeX Gyre Heros body, TeX Gyre Adventor
+%%  for the letterhead, logo colours, official logo (daignostics-logo.pdf,
+%%  found via TEXINPUTS - see build.sh). letter.lua fills in the labels and
+%%  defaults (place, date, opening, closing, signer) before this template
+%%  runs; see README.md for the metadata keys.
+%% ======================================================================
+\documentclass[$if(fontsize)$$fontsize$$else$11pt$endif$,a4paper]{article}
+\usepackage{iftex}
+\usepackage{amsmath,amssymb}
+\usepackage{unicode-math} % also loads fontspec
+\defaultfontfeatures{Scale=MatchLowercase}
+\defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+$if(mainfont)$
+\setmainfont[$for(mainfontoptions)$$mainfontoptions$$sep$,$endfor$]{$mainfont$}
+$else$
+\setmainfont{TeX Gyre Heros}[Scale = 0.92]
+$endif$
+\setsansfont{TeX Gyre Heros}[Scale = 0.92]
+\setmonofont{DejaVu Sans Mono}[Scale = 0.82]
+\newfontfamily\dgheadingfont{TeX Gyre Adventor}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{\usepackage{microtype}}{}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{parskip}
+$if(tables)$
+\usepackage{longtable,booktabs,calc}
+\newcounter{none} % pandoc 3.x: \def\LTcaptype{none} for captionless tables
+$endif$
+$if(graphics)$
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\makeatletter
+\@ifundefined{pandocbounded}{%
+  \newsavebox\pandoc@box
+  \newcommand*\pandocbounded[1]{%
+    \sbox\pandoc@box{#1}%
+    \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+    \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+    \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi
+    \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+    \else\usebox{\pandoc@box}%
+    \fi}%
+}{}
+\makeatother
+$endif$
+$if(strikeout)$
+\usepackage{soul}
+$endif$
+$if(highlighting-macros)$
+$highlighting-macros$
+$endif$
+\setlength{\emergencystretch}{3em}
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen}
+$if(lang)$
+\usepackage[bidi=default]{babel}
+$if(babel-lang)$
+\babelprovide[main,import]{$babel-lang$}
+$endif$
+\let\LanguageShortHands\languageshorthands
+\def\languageshorthands#1{}
+$endif$
+$for(header-includes)$
+$header-includes$
+$endfor$
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{}
+\urlstyle{same}
+
+%% ---- Brand palette (same as ../pandoc-document/daignostics.latex) -------
+\definecolor{dgred}{HTML}{E21E3A}   % logo red
+\definecolor{dgink}{HTML}{303030}   % logo ink
+\definecolor{dgslate}{HTML}{2B3A4A}
+\definecolor{dgmuted}{HTML}{5A6B7B}
+\definecolor{dgline}{HTML}{D7DEE4}
+\color{dgink}
+\hypersetup{colorlinks=true,linkcolor=dgink,urlcolor=dgred,filecolor=dgred,
+  pdfcreator={LaTeX via pandoc},
+$if(title-meta)$
+  pdftitle={$title-meta$},
+$else$
+$if(subject)$
+  pdftitle={$subject$},
+$endif$
+$endif$
+$if(signer)$
+  pdfauthor={$signer$},
+$endif$
+}
+
+%% ---- Page geometry -----------------------------------------------------
+\usepackage[a4paper,top=3.0cm,bottom=3.2cm,left=2.4cm,right=2.4cm,%
+            headheight=24pt,headsep=14pt,footskip=1.6cm]{geometry}
+
+%% ---- Logo (registered figurative mark HR Z20251009) --------------------
+% Used exactly as supplied: only scaled by height, never redrawn, stretched
+% or recoloured; lowered so the lettering sits on the baseline. Without the
+% file the text wordmark is used.
+\newcommand{\dglogofile}{daignostics-logo.pdf}
+\newcommand{\dglogo}[1]{%
+  \IfFileExists{\dglogofile}%
+    {\raisebox{-0.155\height}{\includegraphics[height=#1]{\dglogofile}}}%
+    {{\dgheadingfont\bfseries\large d\textcolor{dgred}{AI}gnostics}}}
+
+%% ---- Company line (footer of every page) -------------------------------
+% Same data as the official memorandum; keep in sync with make-reference.py.
+\newcommand{\dgsep}{\enspace\textcolor{dgred}{|}\enspace}
+\newcommand{\dgcompany}{%
+  {\fontsize{7.5}{9.6}\selectfont\color{dgmuted}%
+   \textbf{\textcolor{dgink}{DAIGNOSTICS d.o.o.}}\dgsep
+   Bobovje 52G, 49000 Bobovje (grad Krapina), Hrvatska\dgsep
+   \href{https://www.daignostics.info}{\textcolor{dgmuted}{www.daignostics.info}}\\
+   OIB: 58352432266\dgsep IBAN: HR4324840081502035263\dgsep
+   \href{mailto:contact@daignostics.info}{\textcolor{dgmuted}{contact@daignostics.info}}}}
+
+%% ---- Header / footer ---------------------------------------------------
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\renewcommand{\headrulewidth}{0.8pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{dgred}%
+  \leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\footrulewidth}{0.4pt}
+\renewcommand{\footrule}{\hbox to\headwidth{\color{dgline}%
+  \leaders\hrule height \footrulewidth\hfill}\vskip 5pt}
+% first page: letterhead (large logo)
+\fancypagestyle{dgfirst}{%
+  \fancyhf{}%
+  \fancyhead[L]{\dglogo{9mm}}%
+  \fancyfoot[C]{\dgcompany}}
+% following pages: small logo + page x / n
+\fancypagestyle{dgnext}{%
+  \fancyhf{}%
+  \fancyhead[L]{\dglogo{4.5mm}}%
+  \fancyhead[R]{\footnotesize\textcolor{dgmuted}{\thepage\ / \pageref*{LastPage}}}%
+  \fancyfoot[C]{\dgcompany}}
+\pagestyle{dgnext}
+
+%% ---- Headings (rare in letters; same family as the document template) --
+\usepackage[explicit]{titlesec}
+\titleformat{\section}{\dgheadingfont\bfseries\large\color{dgink}}{}{0pt}{#1}
+\titleformat{\subsection}{\dgheadingfont\bfseries\normalsize\color{dgink}}{}{0pt}{#1}
+\titlespacing*{\section}{0pt}{1.2em}{0.4em}
+\titlespacing*{\subsection}{0pt}{1.0em}{0.3em}
+
+\widowpenalty=10000
+\clubpenalty=10000
+
+\begin{document}
+\thispagestyle{dgfirst}
+
+%% ---- Recipient -----------------------------------------------------------
+\vspace*{0.3cm}
+\noindent\begin{minipage}[t]{0.62\textwidth}
+\raggedright
+$if(to-first)$\textbf{$to-first$}$for(to-rest)$\\
+$to-rest$$endfor$$endif$$if(attention)$\\[4pt]
+\textcolor{dgmuted}{$label-attention$:} $attention$$endif$
+\end{minipage}\par
+
+%% ---- Place and date --------------------------------------------------------
+\vspace{1.0cm}
+{\raggedleft $place$, $date$\par}
+
+%% ---- Subject ---------------------------------------------------------------
+$if(subject)$
+\vspace{0.7cm}
+\noindent{\dgheadingfont\textcolor{dgmuted}{$label-subject$:}\enspace
+  \textbf{\textcolor{dgink}{$subject$}}\par}
+$endif$
+\vspace{0.6cm}
+
+$opening$
+
+$body$
+
+%% ---- Closing and signature (kept together on one page) ---------------------
+\par\vspace{0.5cm}
+\noindent\begin{minipage}{\textwidth}
+\setlength{\parskip}{0pt}
+$closing$\\[0.45cm]
+\textbf{$organisation$}$if(signer)$\\
+$signer$$endif$$if(signer-title)$\\
+\textcolor{dgmuted}{$signer-title$}$endif$
+$if(signature-line)$\\[1.1cm]
+$label-signature$: \rule{6cm}{0.4pt}
+$endif$
+\end{minipage}
+$if(enclosures)$
+
+\vspace{0.8cm}
+{\small\noindent\textbf{$label-enclosures$:}\\
+$for(enclosures)$–\enspace $enclosures$$sep$\\
+$endfor$\par}
+$endif$
+\end{document}
