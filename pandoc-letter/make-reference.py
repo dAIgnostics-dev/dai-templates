@@ -22,6 +22,7 @@ from docx import Document
 from docx.shared import Cm, Twips
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.dont_write_bytecode = True   # no __pycache__ in ../pandoc-docx
 _spec = importlib.util.spec_from_file_location(
     "dg_reference", os.path.join(HERE, "..", "pandoc-docx", "make-reference.py"))
 B = importlib.util.module_from_spec(_spec)
