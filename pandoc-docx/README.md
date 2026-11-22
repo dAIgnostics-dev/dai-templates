@@ -2,19 +2,21 @@
 
 The Word counterpart of [`../pandoc-document/`](../pandoc-document/) (pandoc →
 PDF). The **same Markdown** (same YAML front matter, same `::: note` callouts)
-builds to a `.docx` styled like the PDF: red accent (`#E63946`), geometric
-Century Gothic headings, a cover page, a running header/footer with the
-**Co-funded by the European Union** emblem, and shaded callout boxes.
+builds to a `.docx` styled like the PDF: the dAIgnostics logo on the cover
+and in the running header, the logo colours (red `#E21E3A`, ink `#303030`),
+geometric Century Gothic headings, a footer with the **Co-funded by the
+European Union** emblem, and shaded callout boxes.
 
 ## Files
 
 | File                    | Purpose                                                                      |
 |-------------------------|------------------------------------------------------------------------------|
-| `reference.docx`        | Pandoc reference document: styles, page setup, header/footer, EU emblem      |
+| `reference.docx`        | Pandoc reference document: styles, page setup, header/footer, logo, EU emblem |
 | `make-reference.py`     | Regenerates `reference.docx` and `daignostics.theme` (python-docx + pandoc)  |
 | `cover-docx.lua`        | Builds the cover page from metadata; handles `toc`, `numbersections`, `abstract`, `confidential`, `lang: hr` |
 | `admonitions-docx.lua`  | Turns `::: note/tip/info/warning/important` divs into callout boxes         |
 | `daignostics.theme`     | Code highlighting theme (tango, background matched to the code box)         |
+| `daignostics-logo.png`  | Official dAIgnostics logo (raster), cover + running header — see the PDF template's *Logo* section |
 | `eu-logo.png`           | The EU emblem (copy of `../pandoc-document/eu-logo.png`)                     |
 | `build.sh`              | One-line build helper                                                        |
 | `example.docx`          | Output for `../pandoc-document/example.md`                                    |
@@ -75,7 +77,10 @@ lang: en                                  # `hr`: Croatian labels, TOC title, sp
 ```
 
 `eu-logo:` and `header-left:` are accepted but ignored: in Word the emblem and
-the header wordmark are part of `reference.docx` (see *Customizing*).
+the header logo are part of `reference.docx` (see *Customizing*). The cover
+logo is `daignostics-logo.png` next to `cover-docx.lua`; without that file the
+cover and (after rerunning `make-reference.py`) the header show the text
+wordmark.
 
 ## Callout boxes
 
@@ -120,6 +125,12 @@ design) with a fontconfig alias, e.g. in `~/.config/fontconfig/fonts.conf`:
   <edit name="family" mode="assign" binding="strong"><string>URW Gothic</string></edit></match>
 ```
 
+## Page breaks
+
+Heading 1–6 have *Keep with next* and *Keep lines together*, so a heading
+never ends a page alone; Table Caption has *Keep with next*, so a caption
+stays with its table. (The PDF template does the same with `\Needspace`.)
+
 ## Differences from the PDF template
 
 - **Page numbers** count the cover (the cover itself shows none), so the first
@@ -146,7 +157,8 @@ and rerun it:
 ```bash
 python3 make-reference.py                               # → reference.docx, daignostics.theme
 python3 make-reference.py --page-label "Page {page} of {total}"
-python3 make-reference.py --logo other-emblem.png
+python3 make-reference.py --logo other-emblem.png      # EU emblem in the footer
+python3 make-reference.py --brand-logo logo.png         # header logo (default daignostics-logo.png)
 ```
 
 You can also open `reference.docx` in Word, change styles (Heading 1, Body

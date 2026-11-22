@@ -8,7 +8,7 @@ Starts from pandoc's own default reference.docx (so every style pandoc emits
 exists), then restyles it to match ../pandoc-document/daignostics.latex:
 palette, fonts, headings, callout and code styles, booktabs-like table style,
 the cover-page styles used by cover-docx.lua, A4 page geometry and the
-running header/footer (wordmark, title, project, page X / Y, EU emblem).
+running header/footer (logo, title, project, page X / Y, EU emblem).
 
 Requires: pandoc on PATH, python-docx (tested with 1.2.0).
 """
@@ -29,8 +29,8 @@ W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 NSDECL = f'xmlns:w="{W_NS}"'
 
 # ---- Brand palette (same names/values as daignostics.latex) -------------
-RED = "E63946"    # dgred   - accent
-INK = "1D2733"    # dgink   - headings / text
+RED = "E21E3A"    # dgred   - accent (logo red)
+INK = "303030"    # dgink   - headings / text (logo ink)
 SLATE = "2B3A4A"  # dgslate - secondary dark
 MUTED = "5A6B7B"  # dgmuted - captions / running heads
 LINE = "D7DEE4"   # dgline  - hairlines
@@ -197,8 +197,9 @@ def build_styles():
     # Captions, figures, footnotes, definitions
     S.append(pstyle("Caption", "caption", '<w:spacing w:before="60" w:after="200"/><w:jc w:val="center"/>',
                     f'<w:i/><w:color w:val="{MUTED}"/>' + sz(9), custom=False))
-    for sid, name in (("TableCaption", "Table Caption"), ("ImageCaption", "Image Caption")):
-        S.append(pstyle(sid, name, "", "", based="Caption"))
+    # pandoc puts table captions above the table: keep them on its page
+    S.append(pstyle("TableCaption", "Table Caption", "<w:keepNext/>", "", based="Caption"))
+    S.append(pstyle("ImageCaption", "Image Caption", "", "", based="Caption"))
     S.append(pstyle("FootnoteText", "footnote text", '<w:spacing w:after="40"/>', sz(8.5),
                     custom=False))
 
@@ -268,7 +269,7 @@ def table_style():
             '<w:tblCellMar><w:top w:w="30" w:type="dxa"/><w:left w:w="120" w:type="dxa"/>'
             '<w:bottom w:w="30" w:type="dxa"/><w:right w:w="120" w:type="dxa"/></w:tblCellMar>'
             '</w:tblPr>'
-            '<w:tblStylePr w:type="firstRow"><w:rPr><w:color w:val="1D2733"/></w:rPr>'
+            f'<w:tblStylePr w:type="firstRow"><w:rPr><w:color w:val="{INK}"/></w:rPr>'
             f'<w:tcPr><w:tcBorders>{b("bottom", 4)}</w:tcBorders><w:vAlign w:val="bottom"/></w:tcPr>'
             '</w:tblStylePr></w:style>')
 
@@ -391,7 +392,7 @@ def footer_table(doc, part, fractions, valign="center"):
     return [c.paragraphs[0] for c in cells]
 
 
-def build_header_footer(doc, logo, page_label):
+def build_header_footer(doc, logo, brand_logo, page_label):
     sec = doc.sections[0]
     sec.page_width, sec.page_height = Twips(PAGE_W), Twips(PAGE_H)
     sec.left_margin = sec.right_margin = Twips(MARGIN_LR)
@@ -406,17 +407,22 @@ def build_header_footer(doc, logo, page_label):
         sec._sectPr.remove(old)
     sec.different_first_page_header_footer = True
 
-    # ---- running header: wordmark left, document title (TITLE field) right
+    # ---- running header: logo left, document title (TITLE field) right.
+    # The logo (registered mark HR Z20251009) is used as supplied - only
+    # scaled by height; without the file the text wordmark is used.
     hdr = sec.header
     hdr.is_linked_to_previous = False
     p = hdr.paragraphs[0]
     p.style = doc.styles["Header"]
-    wm = '<w:rStyle w:val="Wordmark"/>'
-    for xml in (text_run("d", wm),
-                text_run("AI", wm + f'<w:color w:val="{RED}"/>'),
-                text_run("gnostics", wm),
-                f'<w:r {NSDECL}><w:tab/></w:r>'):
-        append_xml(p._p, xml)
+    if os.path.exists(brand_logo):
+        p.add_run().add_picture(brand_logo, height=Cm(0.45))
+    else:
+        wm = '<w:rStyle w:val="Wordmark"/>'
+        for xml in (text_run("d", wm),
+                    text_run("AI", wm + f'<w:color w:val="{RED}"/>'),
+                    text_run("gnostics", wm)):
+            append_xml(p._p, xml)
+    append_xml(p._p, f'<w:r {NSDECL}><w:tab/></w:r>')
     for xml in field_runs("TITLE", f'<w:i/><w:color w:val="{MUTED}"/>'):
         append_xml(p._p, xml)
 
@@ -470,7 +476,11 @@ def write_theme(path):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("-o", "--output", default=os.path.join(HERE, "reference.docx"))
-    ap.add_argument("--logo", default=os.path.join(HERE, "eu-logo.png"))
+    ap.add_argument("--logo", default=os.path.join(HERE, "eu-logo.png"),
+                    help="EU emblem for the footer (default: eu-logo.png)")
+    ap.add_argument("--brand-logo", default=os.path.join(HERE, "daignostics-logo.png"),
+                    help="dAIgnostics logo for the running header (default: daignostics-logo.png; "
+                         "text wordmark if the file is missing)")
     ap.add_argument("--page-label", default="{page} / {total}",
                     help='footer page label, e.g. "Page {page} of {total}" (default: "{page} / {total}")')
     ap.add_argument("--theme-out", default=os.path.join(HERE, "daignostics.theme"))
@@ -485,7 +495,7 @@ def main():
     replace_styles(doc, build_styles() + [table_style()])
     patch_part_blob(doc, "/word/theme/theme1.xml", patch_theme)
     patch_part_blob(doc, "/word/fontTable.xml", patch_font_table)
-    build_header_footer(doc, a.logo, a.page_label)
+    build_header_footer(doc, a.logo, a.brand_logo, a.page_label)
     cp = doc.core_properties
     cp.title, cp.author, cp.comments = "dAIgnostics reference document", "dAIgnostics", \
         "Generated by make-reference.py - pandoc --reference-doc"
