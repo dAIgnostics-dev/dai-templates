@@ -1,203 +1,252 @@
-%% ======================================================================
-%%  dAIgnostics letter / memorandum - pandoc -> PDF (XeLaTeX)
-%%  Same look as ../pandoc-document: TeX Gyre Heros body, TeX Gyre Adventor
-%%  for the letterhead, logo colours, official logo (daignostics-logo.pdf,
-%%  found via TEXINPUTS - see build.sh). letter.lua fills in the labels and
-%%  defaults (place, date, opening, closing, signer) before this template
-%%  runs; see README.md for the metadata keys.
-%% ======================================================================
-\documentclass[$if(fontsize)$$fontsize$$else$11pt$endif$,a4paper]{article}
-\usepackage{iftex}
-\usepackage{amsmath,amssymb}
-\usepackage{unicode-math} % also loads fontspec
-\defaultfontfeatures{Scale=MatchLowercase}
-\defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
-$if(mainfont)$
-\setmainfont[$for(mainfontoptions)$$mainfontoptions$$sep$,$endfor$]{$mainfont$}
-$else$
+%% =====================================================================
+%%  dAIgnostics business letter (dopis) -- pandoc -> PDF (XeLaTeX)
+%%  Layout: A4, DIN 5008 form B (window envelope DL / C5/6, right or left
+%%  window at 20/25 mm from the left edge, 45 mm from the top), legal data
+%%  required by ZTD art. 21(4)-(5) in the footer of every page.
+%%  Style: brand colours (Marketing, 2026-11-22) #303030 / #E21E3A, official
+%%  vector logo, slogan; fonts as ../pandoc-document (Heros + Adventor).
+%%  Use only through build.sh (needs letter.lua and company.yaml).
+%% =====================================================================
+\documentclass[11pt]{article}
+
+%% ---- Fonts -------------------------------------------------------------
+\usepackage{fontspec}
+\defaultfontfeatures{Ligatures=TeX}
+%% Same fonts as ../pandoc-document (Sandi): TeX Gyre Heros (~Helvetica/Arial)
+%% for text, TeX Gyre Adventor (~Century Gothic) for headings.
 \setmainfont{TeX Gyre Heros}[Scale = 0.92]
-$endif$
 \setsansfont{TeX Gyre Heros}[Scale = 0.92]
 \setmonofont{DejaVu Sans Mono}[Scale = 0.82]
 \newfontfamily\dgheadingfont{TeX Gyre Adventor}
-\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
-\IfFileExists{microtype.sty}{\usepackage{microtype}}{}
-\usepackage{xcolor}
-\usepackage{graphicx}
-\usepackage{array}
-\usepackage{parskip}
-$if(tables)$
-\usepackage{longtable,booktabs,calc}
-\newcounter{none} % pandoc 3.x: \def\LTcaptype{none} for captionless tables
-$endif$
-$if(graphics)$
-\makeatletter
-\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
-\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
-\makeatother
-\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
-\makeatletter
-\@ifundefined{pandocbounded}{%
-  \newsavebox\pandoc@box
-  \newcommand*\pandocbounded[1]{%
-    \sbox\pandoc@box{#1}%
-    \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
-    \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
-    \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi
-    \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
-    \else\usebox{\pandoc@box}%
-    \fi}%
-}{}
-\makeatother
-$endif$
-$if(strikeout)$
-\usepackage{soul}
-$endif$
-$if(highlighting-macros)$
-$highlighting-macros$
-$endif$
-\setlength{\emergencystretch}{3em}
-\providecommand{\tightlist}{%
-  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-\setcounter{secnumdepth}{-\maxdimen}
-$if(lang)$
-\usepackage[bidi=default]{babel}
-$if(babel-lang)$
-\babelprovide[main,import]{$babel-lang$}
-$endif$
-\let\LanguageShortHands\languageshorthands
-\def\languageshorthands#1{}
-$endif$
-$for(header-includes)$
-$header-includes$
-$endfor$
-\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
-\IfFileExists{xurl.sty}{\usepackage{xurl}}{}
-\urlstyle{same}
 
-%% ---- Brand palette (same as ../pandoc-document/daignostics.latex) -------
-\definecolor{dgred}{HTML}{E21E3A}   % logo red
-\definecolor{dgink}{HTML}{303030}   % logo ink
-\definecolor{dgslate}{HTML}{2B3A4A}
-\definecolor{dgmuted}{HTML}{5A6B7B}
-\definecolor{dgline}{HTML}{D7DEE4}
-\color{dgink}
-\hypersetup{colorlinks=true,linkcolor=dgink,urlcolor=dgred,filecolor=dgred,
-  pdfcreator={LaTeX via pandoc},
-$if(title-meta)$
-  pdftitle={$title-meta$},
+\usepackage{polyglossia}
+$if(lang-en)$
+\setdefaultlanguage[variant=british]{english}
+\setotherlanguage{croatian}
 $else$
-$if(subject)$
-  pdftitle={$subject$},
+\setdefaultlanguage{croatian}
+\setotherlanguage[variant=british]{english}
 $endif$
-$endif$
-$if(signer)$
-  pdfauthor={$signer$},
-$endif$
-}
 
 %% ---- Page geometry -----------------------------------------------------
-\usepackage[a4paper,top=3.0cm,bottom=3.2cm,left=2.4cm,right=2.4cm,%
-            headheight=24pt,headsep=14pt,footskip=1.6cm]{geometry}
+%% Pages 2+ start at top=27 mm; page 1 is pushed down to the DIN subject
+%% line by \dgfirstpageskip below.
+\usepackage[a4paper,left=25mm,right=20mm,top=27mm,bottom=34mm,%
+            headheight=14pt,headsep=8mm,footskip=17mm]{geometry}
 
-%% ---- Logo (registered figurative mark HR Z20251009) --------------------
-% Used exactly as supplied: only scaled by height, never redrawn, stretched
-% or recoloured; lowered so the lettering sits on the baseline. Without the
-% file the text wordmark is used.
-\newcommand{\dglogofile}{daignostics-logo.pdf}
-\newcommand{\dglogo}[1]{%
-  \IfFileExists{\dglogofile}%
-    {\raisebox{-0.155\height}{\includegraphics[height=#1]{\dglogofile}}}%
-    {{\dgheadingfont\bfseries\large d\textcolor{dgred}{AI}gnostics}}}
-
-%% ---- Company line (footer of every page) -------------------------------
-% Same data as the official memorandum; keep in sync with make-reference.py.
-\newcommand{\dgsep}{\enspace\textcolor{dgred}{|}\enspace}
-\newcommand{\dgcompany}{%
-  {\fontsize{7.5}{9.6}\selectfont\color{dgmuted}%
-   \textbf{\textcolor{dgink}{DAIGNOSTICS d.o.o.}}\dgsep
-   Bobovje 52G, 49000 Bobovje (grad Krapina), Hrvatska\dgsep
-   \href{https://www.daignostics.info}{\textcolor{dgmuted}{www.daignostics.info}}\\
-   OIB: 58352432266\dgsep IBAN: HR4324840081502035263\dgsep
-   \href{mailto:contact@daignostics.info}{\textcolor{dgmuted}{contact@daignostics.info}}}}
-
-%% ---- Header / footer ---------------------------------------------------
+%% ---- Packages ----------------------------------------------------------
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{array,longtable,booktabs,calc}
 \usepackage{fancyhdr}
 \usepackage{lastpage}
-\renewcommand{\headrulewidth}{0.8pt}
-\renewcommand{\headrule}{\hbox to\headwidth{\color{dgred}%
-  \leaders\hrule height \headrulewidth\hfill}}
-\renewcommand{\footrulewidth}{0.4pt}
-\renewcommand{\footrule}{\hbox to\headwidth{\color{dgline}%
-  \leaders\hrule height \footrulewidth\hfill}\vskip 5pt}
-% first page: letterhead (large logo)
-\fancypagestyle{dgfirst}{%
-  \fancyhf{}%
-  \fancyhead[L]{\dglogo{9mm}}%
-  \fancyfoot[C]{\dgcompany}}
-% following pages: small logo + page x / n
-\fancypagestyle{dgnext}{%
-  \fancyhf{}%
-  \fancyhead[L]{\dglogo{4.5mm}}%
-  \fancyhead[R]{\footnotesize\textcolor{dgmuted}{\thepage\ / \pageref*{LastPage}}}%
-  \fancyfoot[C]{\dgcompany}}
-\pagestyle{dgnext}
+\usepackage{refcount}
+\usepackage{tikz}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
 
-%% ---- Headings (rare in letters; same family as the document template) --
-\usepackage[explicit]{titlesec}
-\titleformat{\section}{\dgheadingfont\bfseries\large\color{dgink}}{}{0pt}{#1}
-\titleformat{\subsection}{\dgheadingfont\bfseries\normalsize\color{dgink}}{}{0pt}{#1}
-\titlespacing*{\section}{0pt}{1.2em}{0.4em}
-\titlespacing*{\subsection}{0pt}{1.0em}{0.3em}
-
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.75\baselineskip}
+\linespread{1.08}
+\setlist{itemsep=0.15em,topsep=0.2em,leftmargin=1.4em}
+\setlist[itemize]{label={\color{dgred}\textbullet}}
+\raggedbottom
 \widowpenalty=10000
 \clubpenalty=10000
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{%
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}\fi}
+\makeatother
+\def\LTcaptype{none}
+
+%% ---- Palette: brand allows only dark grey and red for text ------------
+\definecolor{dgred}{HTML}{E21E3A}
+\definecolor{dgink}{HTML}{303030}
+\definecolor{dgslate}{HTML}{303030}
+\definecolor{dgmuted}{HTML}{303030}
+\definecolor{dgline}{HTML}{D9D9D9}   % hairlines only, never text
+\color{dgink}
+
+%% Official logo (vector, from Marketing: Visuals/daignostics-vector.svg)
+\newcommand{\dglogofile}{$if(logo)$$logo$$else$daignostics-logo.pdf$endif$}
+\newcommand{\dgwordmark}[1][4.2mm]{\IfFileExists{\dglogofile}%
+  {\includegraphics[height=#1]{\dglogofile}}%
+  {{\bfseries d\textcolor{dgred}{AI}gnostics}}}
+\newcommand{\dgslogan}{{\bfseries Detect earlier. \textcolor{dgred}{Act smarter.} For a life worth living.}}
+\newcommand{\dgEUlogo}{$if(eu-logo)$$eu-logo$$else$eu-logo.png$endif$}
+
+%% ---- Legal footer (ZTD art. 21) ----------------------------------------
+\newcommand{\dglegal}{%
+  \fontsize{6.6}{8.4}\selectfont\color{dgmuted}%
+  \begin{minipage}[t]{0.29\linewidth}\raggedright
+    {\color{dgslate}\bfseries $company-name$}\\
+    $company-street$, $company-city$$if(lang-en)$, $company-country-en$$endif$\\
+    $company-web$ · $company-email$\\
+    $company-phone$
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.31\linewidth}\raggedright
+    $label-court$: $if(lang-en)$$company-court-en$$else$$company-court$$endif$\\
+    $label-mbs$: $company-mbs$ · $label-oib$: $if(lang-en)$$company-vat$$else$$company-oib$$endif$\\
+    $label-capital$: $if(lang-en)$$company-capital-en$$else$$company-capital$$endif$$if(lang-en)$$if(company-capital-paid-en)$, $company-capital-paid-en$$endif$$else$$if(company-capital-paid)$, $company-capital-paid$$endif$$endif$\\
+    $label-management$: $company-management$
+  \end{minipage}\hfill
+  \begin{minipage}[t]{$if(eu-funding)$0.27\linewidth$else$0.33\linewidth$endif$}\raggedright
+    $label-bank$: $company-bank$\\
+    IBAN: $company-iban$\\
+    SWIFT/BIC: $company-swift$
+  \end{minipage}%
+  $if(eu-funding)$\hfill
+  \begin{minipage}[t]{0.09\linewidth}\raggedleft
+    \IfFileExists{\dgEUlogo}{\raisebox{-0.75\height}{\includegraphics[height=0.95cm]{\dgEUlogo}}}{}
+  \end{minipage}$endif$}
+
+\newcommand{\dgpageno}{%
+  \ifnum\getpagerefnumber{LastPage}>1
+    $label-page$ \thepage\ / \pageref{LastPage}%
+  \fi}
+
+%% ---- Page styles -------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.6pt}
+\renewcommand{\footrulewidth}{0pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{dgred}%
+  \leaders\hrule height \headrulewidth\hfill}}
+\fancyhead[L]{\raisebox{-0.5mm}{\dgwordmark[4.2mm]}}
+\fancyhead[R]{\footnotesize\color{dgmuted}$if(our-ref)$$our-ref$\quad·\quad$endif$\dgpageno}
+\fancyfoot[C]{\color{dgline}\rule{\linewidth}{0.4pt}\\[2pt]\dglegal}
+\fancypagestyle{dgfirst}{%
+  \fancyhf{}%
+  \renewcommand{\headrulewidth}{0pt}%
+  \fancyfoot[C]{\color{dgline}\rule{\linewidth}{0.4pt}\\[2pt]\dglegal}}
 
 \begin{document}
 \thispagestyle{dgfirst}
 
-%% ---- Recipient -----------------------------------------------------------
-\vspace*{0.3cm}
-\noindent\begin{minipage}[t]{0.62\textwidth}
-\raggedright
-$if(to-first)$\textbf{$to-first$}$for(to-rest)$\\
-$to-rest$$endfor$$endif$$if(attention)$\\[4pt]
-\textcolor{dgmuted}{$label-attention$:} $attention$$endif$
-\end{minipage}\par
-
-%% ---- Place and date --------------------------------------------------------
-\vspace{1.0cm}
-{\raggedleft $place$, $date$\par}
-
-%% ---- Subject ---------------------------------------------------------------
-$if(subject)$
-\vspace{0.7cm}
-\noindent{\dgheadingfont\textcolor{dgmuted}{$label-subject$:}\enspace
-  \textbf{\textcolor{dgink}{$subject$}}\par}
+%% ---- Page 1: letterhead, address window, reference block, marks ------
+\begin{tikzpicture}[remember picture,overlay,x=1mm,y=1mm]
+  \coordinate (O) at (current page.north west);
+$if(layout-b)$
+  %% ---- Variant B: centred, minimal -------------------------------------
+  \node[anchor=north,inner sep=0] at ([shift={(107.5,-12)}]O) {\dgwordmark[12mm]};
+  \node[anchor=base,inner sep=0,font=\fontsize{7.6}{9}\selectfont,text=dgink]
+    at ([shift={(107.5,-29)}]O) {\dgslogan};
+  \draw[dgred,line width=1pt] ([shift={(95,-32)}]O) -- ([shift={(120,-32)}]O);
+  \node[anchor=base,inner sep=0,font=\fontsize{7.2}{9}\selectfont,text=dgink]
+    at ([shift={(107.5,-37)}]O)
+    {$company-street$, $company-city$$if(lang-en)$, $company-country-en$$endif$\quad
+     \textbf{T:} $company-phone$\quad \textbf{E:} $company-email$\quad \textbf{W:} www.$company-web$};
+$elseif(layout-c)$
+  %% ---- Variant C: logo | red vertical line | contact ------------------
+  \node[anchor=north west,inner sep=0] at ([shift={(25,-14)}]O) {\dgwordmark[10mm]};
+  \node[anchor=base west,inner sep=0,font=\fontsize{7.6}{9}\selectfont,text=dgink]
+    at ([shift={(25,-29)}]O) {\dgslogan};
+  \draw[dgred,line width=1.4pt] ([shift={(132,-13)}]O) -- ([shift={(132,-30)}]O);
+  \node[anchor=north west,inner sep=0,align=left,
+        font=\fontsize{7.6}{10}\selectfont,text=dgink]
+    at ([shift={(136,-13.4)}]O)
+    {$company-street$, $company-city$$if(lang-en)$, $company-country-en$$endif$\\
+     \textbf{T:} $company-phone$\\ \textbf{E:} $company-email$\\ \textbf{W:} www.$company-web$};
+$else$
+  %% ---- Variant A: logo left, contact right, red rule ------------------
+  \node[anchor=north west,inner sep=0] at ([shift={(25,-13)}]O)
+    {\dgwordmark[11mm]};
+  \node[anchor=base west,inner sep=0,font=\fontsize{7.6}{9}\selectfont,text=dgink]
+    at ([shift={(25,-28.6)}]O) {\dgslogan};
+  \node[anchor=north east,inner sep=0,align=right,
+        font=\fontsize{7.6}{10}\selectfont,text=dgink]
+    at ([shift={(190,-13)}]O)
+    {$company-street$, $company-city$$if(lang-en)$, $company-country-en$$endif$\\
+     \textbf{T:} $company-phone$\\ \textbf{E:} $company-email$\\ \textbf{W:} www.$company-web$};
+  \draw[dgred,line width=0.8pt] ([shift={(25,-31)}]O) -- ([shift={(190,-31)}]O);
 $endif$
-\vspace{0.6cm}
+  % return address (DIN 5008 additional zone, above the recipient)
+  \node[anchor=base west,inner sep=0,font=\fontsize{6.6}{8}\selectfont,text=dgmuted]
+    at ([shift={(25,-59.5)}]O)
+    {$company-short$ · $company-street$ · $company-city$$if(lang-en)$ · $company-country-en$$endif$};
+  \draw[dgline,line width=0.3pt] ([shift={(25,-61)}]O) -- ([shift={(105,-61)}]O);
+  % recipient (address field 62.7-90 mm)
+  \node[anchor=north west,inner sep=0,align=left,
+        font=\fontsize{10.5}{13}\selectfont,text=dgink]
+    at ([shift={(25,-64.5)}]O)
+    {$for(recipient)$$recipient$$sep$\\ $endfor$};
+  % reference block (DIN 5008 information block, x = 125 mm)
+  \node[anchor=north west,inner sep=0] at ([shift={(120,-50)}]O) {%
+    \fontsize{8}{10.2}\selectfont\color{dgink}
+    \begin{tabular}{@{}l@{\hspace{3mm}}>{\raggedright\arraybackslash}p{46mm}@{}}
+    $if(our-ref)$\textcolor{dgmuted}{$label-our-ref$} & \textenglish{\hyphenchar\font=-1 $our-ref$} \\[2pt]$endif$
+    $if(your-ref)$\textcolor{dgmuted}{$label-your-ref$} & $your-ref$ \\[2pt]$endif$
+    $if(date)$\textcolor{dgmuted}{$label-date$} & $if(place)$$place$, $endif$$date$ \\[2pt]$endif$
+    $if(contact)$\textcolor{dgmuted}{$label-contact$} & $contact$$if(contact-email)$\newline $contact-email$$endif$$if(contact-phone)$\newline $contact-phone$$endif$ \\$endif$
+    \end{tabular}};
+  % fold marks (105 / 210 mm) and punch mark (148.5 mm)
+  \draw[dgline,line width=0.4pt] ([shift={(4,-105)}]O) -- ([shift={(9,-105)}]O);
+  \draw[dgline,line width=0.4pt] ([shift={(4,-210)}]O) -- ([shift={(9,-210)}]O);
+  \draw[dgline,line width=0.4pt] ([shift={(4,-148.5)}]O) -- ([shift={(11,-148.5)}]O);
+  $if(eu-funding)$
+  % funding acknowledgement, page 1 only, above the footer
+  \node[anchor=south west,inner sep=0,font=\fontsize{6.6}{8}\selectfont,text=dgmuted]
+    at ([shift={(25,22.2)}]current page.south west) {$funding$};
+  $endif$
+\end{tikzpicture}%
+%% push the subject down to the DIN 5008 position (~103 mm from the top)
+\vspace*{\dimexpr 103mm - 27mm - \baselineskip\relax}
 
+$if(subject)$
+{\dgheadingfont\bfseries\large $label-subject$: $subject$\par}
+\vspace{0.4\baselineskip}
+$endif$
+
+$if(opening)$
 $opening$
 
+$endif$
 $body$
 
-%% ---- Closing and signature (kept together on one page) ---------------------
-\par\vspace{0.5cm}
-\noindent\begin{minipage}{\textwidth}
+\par\vspace{0.6\baselineskip}
+\noindent\begin{minipage}{\linewidth}
 \setlength{\parskip}{0pt}
-$closing$\\[0.45cm]
-\textbf{$organisation$}$if(signer)$\\
-$signer$$endif$$if(signer-title)$\\
-\textcolor{dgmuted}{$signer-title$}$endif$
-$if(signature-line)$\\[1.1cm]
-$label-signature$: \rule{6cm}{0.4pt}
+$closing$\par
+$if(signature)$
+\vspace{1mm}\includegraphics[height=16mm]{$signature$}\par\vspace{1mm}
+$else$
+\vspace{18mm}
 $endif$
+$if(signatory)${\bfseries $signatory$}\par$endif$
+$if(signatory-title)${\bfseries\color{dgred}$signatory-title$}\par$endif$
+$company-short$\par
 \end{minipage}
-$if(enclosures)$
 
-\vspace{0.8cm}
-{\small\noindent\textbf{$label-enclosures$:}\\
-$for(enclosures)$–\enspace $enclosures$$sep$\\
-$endfor$\par}
+$if(enclosures)$
+\par\vspace{0.4\baselineskip}
+\noindent\begin{minipage}{\linewidth}\small
+{\bfseries $label-enclosures$:}
+\begin{itemize}[label={–},leftmargin=1.2em,itemsep=0pt,topsep=1pt]
+$for(enclosures)$
+\item $enclosures$
+$endfor$
+\end{itemize}
+\end{minipage}
+$endif$
+$if(cc)$
+\par\vspace{0.4\baselineskip}
+\noindent\begin{minipage}{\linewidth}\small
+{\bfseries $label-cc$:}
+\begin{itemize}[label={–},leftmargin=1.2em,itemsep=0pt,topsep=1pt]
+$for(cc)$
+\item $cc$
+$endfor$
+\end{itemize}
+\end{minipage}
 $endif$
 \end{document}

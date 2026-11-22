@@ -1,0 +1,30 @@
+# Podaci o društvu za poslovni dopis (ZTD čl. 21. st. 4-5).
+# Jedino mjesto gdje se ovi podaci mijenjaju. build.sh ga učitava kao
+# --metadata-file, pa ga pojedini dopis može pregaziti u svom YAML-u.
+#
+# Izvor: Company_Facts_Current.md (izvadak iz sudskog registra 2026-06-06,
+# RBA obavijest NOT-23-005-R1-I-230405).
+
+company-name:    "DAIGNOSTICS d.o.o. za istraživanje i razvoj"
+company-short:   "DAIGNOSTICS d.o.o."
+company-street:  "Bobovje 52G"
+company-city:    "49000 Krapina"
+company-country-en: "Croatia"
+company-web:     "daignostics.info"
+company-email:   "contact@daignostics.info"
+company-phone:   "+385 1 33 752 33"
+
+company-court:   "Trgovački sud u Zagrebu"
+company-court-en: "Commercial Court in Zagreb"
+company-mbs:     "081500118"
+company-oib:     "58352432266"
+company-vat:     "HR58352432266"
+company-capital: "2.550,00 EUR"
+company-capital-en: "EUR 2,550.00"
+# company-capital-paid: "uplaćen u cijelosti"     # OTVORENO: potvrditi
+# company-capital-paid-en: "paid in full"
+company-management: "Domagoj Frank"
+
+company-bank:    "Raiffeisenbank Austria d.d., Zagreb"
+company-iban:    "HR9024840081135316702"
+company-swift:   "RZBHHR2X"

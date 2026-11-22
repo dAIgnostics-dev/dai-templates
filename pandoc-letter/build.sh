@@ -1,43 +1,45 @@
 #!/usr/bin/env bash
-# Build a dAIgnostics letter (memorandum) from one Markdown file.
-#   ./build.sh letter.md              # → letter.pdf and letter.docx
-#   ./build.sh letter.md pdf [out.pdf]
-#   ./build.sh letter.md docx [out.docx]
+# Build a dAIgnostics business letter from Markdown.
+#   ./build.sh dopis.md              -> dopis.pdf
+#   ./build.sh dopis.md dopis.docx   -> Word
 set -euo pipefail
 
-IN="${1:?usage: ./build.sh letter.md [pdf|docx|both] [output]}"
-FMT="${2:-both}"
+IN="${1:?usage: ./build.sh input.md [output.pdf|output.docx]}"
+OUT="${2:-${IN%.md}.pdf}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IN_DIR="$(cd "$(dirname "$IN")" && pwd)"
-BASE="${IN%.md}"
 
-# The logo is shared with the other templates (one source file):
-# daignostics-logo.pdf from ../pandoc-document (via TEXINPUTS) for the PDF,
-# ../pandoc-docx/daignostics-logo.png is embedded in reference.docx.
-export TEXINPUTS="$HERE:$HERE/../pandoc-document:${TEXINPUTS:-}"
+# The logo and the EU emblem are shared with the document templates (one
+# copy of the registered logo in the repository): daignostics-logo.pdf and
+# eu-logo.png from ../pandoc-document. TEXINPUTS lets XeLaTeX find them from
+# any working directory; the resource path does the same for pandoc (DOCX).
+SHARED="$HERE/../pandoc-document"
+export TEXINPUTS="$HERE:$SHARED:${TEXINPUTS:-}"
 
-build_pdf() {
-  pandoc "$IN" \
-    --template="$HERE/daignostics-letter.latex" \
-    --lua-filter="$HERE/letter.lua" \
-    --pdf-engine=xelatex \
-    --resource-path=".:$IN_DIR:$HERE" \
-    -o "$1"
-  echo "Wrote $1"
+COMMON=(--metadata-file="$HERE/company.yaml"
+        --lua-filter="$HERE/letter.lua"
+        --resource-path=".:$IN_DIR:$HERE:$SHARED")
+
+# YAML front matter value of a top-level key (first match, quotes stripped)
+front() {
+  sed -n '1{/^---$/!q};1,/^\(---\|\.\.\.\)$/p' "$IN" | sed -n "2,\$s/^$1:[[:space:]]*//p" |
+    head -n1 | tr -d "\"'" | tr '[:upper:]' '[:lower:]'
 }
 
-build_docx() {
-  pandoc "$IN" \
-    --reference-doc="$HERE/reference.docx" \
-    --lua-filter="$HERE/letter.lua" \
-    --resource-path=".:$IN_DIR:$HERE" \
-    -o "$1"
-  echo "Wrote $1"
-}
-
-case "$FMT" in
-  pdf)  build_pdf  "${3:-$BASE.pdf}" ;;
-  docx) build_docx "${3:-$BASE.docx}" ;;
-  both) build_pdf "$BASE.pdf"; build_docx "$BASE.docx" ;;
-  *) echo "unknown format: $FMT (pdf, docx or both)" >&2; exit 2 ;;
+case "$OUT" in
+  *.docx)
+    LANG_REF=hr
+    [[ "$(front lang)" == en* ]] && LANG_REF=en
+    VARIANT="$(front letterhead)"
+    VARIANT="${VARIANT:0:1}"
+    [[ "$VARIANT" =~ ^[abc]$ ]] || VARIANT=c   # default: variant C (as letter.lua)
+    pandoc "$IN" "${COMMON[@]}" \
+      --reference-doc="$HERE/reference-letter-$LANG_REF-$VARIANT.docx" \
+      -o "$OUT" ;;
+  *)
+    pandoc "$IN" "${COMMON[@]}" \
+      --template="$HERE/daignostics-letter.latex" \
+      --pdf-engine=xelatex \
+      -o "$OUT" ;;
 esac
+echo "Wrote $OUT"

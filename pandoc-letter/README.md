@@ -1,77 +1,104 @@
-# dAIgnostics letter / memorandum (pandoc → PDF + DOCX)
+# dAIgnostics business letter (pandoc → PDF / DOCX)
 
-One Markdown file → a letter on the dAIgnostics letterhead, as **PDF**
-(XeLaTeX) and as **Word** (DOCX), with the same layout:
+Letterhead template for outgoing business letters (*dopis*), built from the
+same Markdown into PDF (XeLaTeX) or Word.
 
-- page 1: official logo over a red rule (letterhead); later pages: small logo
-  and `page / total`
-- recipient block (first line bold) and *N/R*, place and date on the right,
-  *Predmet* (subject)
-- opening, body, closing, *DAIGNOSTICS d.o.o.*, signer, signer title and a
-  signature line (kept together on one page), optional enclosures
-- footer on every page: company name, address, web, OIB, IBAN, e-mail (as in
-  the official memorandum)
+Fonts are the same as Sandi's document templates: TeX Gyre Heros (text) and
+TeX Gyre Adventor (headings, subject) in PDF; Arial and Century Gothic in
+Word. Colours and logo follow Marketing's brand rules (2026-11-22): text colours **#303030** (dark grey) and **#E21E3A** (red),
+the official vector logo, and the slogan *Detect earlier. **Act smarter.**
+For a life worth living.* with "Act smarter." in red. Contact labels
+(T: / E: / W:) bold, data regular. The signatory's function is bold red.
 
-Fonts and colours are those of the other templates: TeX Gyre Heros + Adventor
-in the PDF, Arial + Century Gothic in Word; logo red `#E21E3A`, ink `#303030`.
+Based on D. Frank's memorandum proposal (22.11.2026.). **Letterhead variant C**
+(logo | red vertical line | contact, matching the e-mail signature) is the
+default; variants A and B are kept and can be chosen per letter with
+`letterhead:`. All three are implemented for both PDF and DOCX.
+
+| Variant | Letterhead |
+|---|---|
+| `a` | logo + slogan left, contact right, red horizontal rule |
+| `b` | centred, minimal: logo, slogan, short red rule, contact in one line |
+| `c` (default) | logo + slogan, red vertical line, contact |
 
 ## Files
 
-| File                        | Purpose                                                              |
-|-----------------------------|----------------------------------------------------------------------|
-| `daignostics-letter.latex`  | Pandoc LaTeX template (PDF)                                           |
-| `letter.lua`                | Filter for both outputs: labels by language, defaults; builds the letter blocks for DOCX |
-| `reference.docx`            | Pandoc reference document (styles, letterhead, footer)               |
-| `make-reference.py`         | Regenerates `reference.docx` (reuses `../pandoc-docx/make-reference.py`) |
-| `build.sh`                  | Builds PDF and/or DOCX                                               |
-| `example.md` / `.pdf` / `.docx` | Example letter and its outputs                                    |
+| File | Purpose |
+|---|---|
+| `daignostics-letter.latex` | PDF template (letterhead, address window, reference block, legal footer) |
+| `letter.lua` | Shared filter: HR/EN labels; for DOCX builds the address/reference block, subject, closing, signature, enclosures |
+| `company.yaml` | Company data for the letterhead and the statutory footer — **the only place to change them** |
+| `make-reference-letter.py` | Regenerates `reference-letter-{hr,en}-{a,b,c}.docx` from `company.yaml` |
+| `reference-letter-*.docx` | Pandoc reference documents per language and letterhead variant (styles, header, footer) |
+| `build.sh` | Build helper: output extension decides PDF or DOCX; picks the reference document by `lang` and `letterhead` |
+| `example-hr.md`, `example-en.md` (+ `.pdf`, `.docx`) | Worked examples and their outputs |
 
-The logo is not copied here: the PDF uses `../pandoc-document/daignostics-logo.pdf`
-(`build.sh` puts that folder on `TEXINPUTS`), `reference.docx` embeds
-`../pandoc-docx/daignostics-logo.png`. Keep the repository layout intact, or
-copy those files next to this folder.
+The logo and the EU emblem are **not copied** into this folder: the PDF uses
+`../pandoc-document/daignostics-logo.pdf` and `eu-logo.png` (`build.sh` puts
+that folder on `TEXINPUTS` and on the resource path), the reference documents
+embed `../pandoc-docx/daignostics-logo.png`. These are the official logo files
+(registered mark HR Z20251009): use only them, never redraw or recolour.
 
 ## Usage
 
 ```bash
-./build.sh letter.md              # → letter.pdf and letter.docx
-./build.sh letter.md pdf          # PDF only
-./build.sh letter.md docx out.docx
+./build.sh dopis.md               # → dopis.pdf
+./build.sh dopis.md dopis.docx    # → Word (reference doc chosen by `lang`)
+python3 make-reference-letter.py  # after editing company.yaml (needs python-docx, PyYAML)
 ```
 
-Requirements as for `../pandoc-document` (pandoc 3.x, XeLaTeX, TeX Gyre fonts)
-and, only to regenerate `reference.docx`, python-docx (tested 1.2.0).
-
-## Metadata keys (YAML front matter)
+## Metadata
 
 ```yaml
 ---
-to:                                   # recipient, one line per item; first line bold
-  - "Naziv primatelja d.o.o."
-  - "Ulica i kućni broj 1"
+lang: hr                       # hr | en  (labels, hyphenation, footer)
+letterhead: c                  # a | b | c  (default c)
+recipient:                     # address window, max. 6 lines
+  - "Primjer d.o.o."
+  - "n/r gđa Ana Primjer"
+  - "Ulica primjera 1"
   - "10000 Zagreb"
-attention: "Ime Prezime"              # N/R (Attn.)
-place: "Bobovje"                      # default: Bobovje
-date: "22.11.2026."                   # default: today (22.11.2026. / 22 November 2026)
+our-ref: "LET-26-001-R1-P-261122-Primjer d.o.o.-Naslov"   # code from Document coding.xlsx
+your-ref: "Vaš dopis od 15. 11. 2026."                     # optional
+place: "Zagreb"                # optional, printed before the date
+date: "22. studenoga 2026."
+contact: "Domagoj Frank"       # optional, + contact-email / contact-phone
 subject: "Predmet dopisa"
-opening: "Poštovani,"                 # default by language
-closing: "S poštovanjem,"             # default by language
-organisation: "DAIGNOSTICS d.o.o."    # default
-signer: "Ime Prezime"                 # default: first `author`
-signer-title: "Funkcija"
-signature-line: true                  # "Potpis: ____"; false to omit
-enclosures: ["Prilog 1", "Prilog 2"]  # "Prilozi:" list at the end
-lang: hr                              # default hr; `en` for English labels and date
+opening: "Poštovana gospođo Primjer,"
+closing: "S poštovanjem,"      # optional, default per language
+signatory: "Domagoj Frank"
+signatory-title: "direktor"
+signature: "potpis.png"        # optional scanned signature
+enclosures: ["Prilog 1 – …"]   # optional
+cc: ["…"]                      # optional
+eu-funding: true               # optional: EU emblem + funding sentence
+funding: "…"                   # optional, overrides the default sentence
 ---
+Body text in Markdown.
 ```
 
-All keys are optional. The body is ordinary Markdown (paragraphs, emphasis,
-links, lists, tables). After *Poštovani,* the body starts with a lower-case
-letter, as usual in Croatian letters.
+## Layout (best practice)
 
-## Company details
+- A4, DIN 5008 form B: recipient in the window of a DL / C5/6 envelope
+  (left window, 45–90 mm from the top), return-address line above it,
+  reference block on the right (our ref., your ref., date, contact).
+- Fold marks at 105 and 210 mm, punch mark at 148.5 mm (PDF only).
+- Subject in the heading font, label "Predmet:" / "Subject:" (Croatian
+  office practice).
+- Page 1: full letterhead. Pages 2+: wordmark, reference and "Page X / Y".
+- Footer on every page: statutory details required for business paper by
+  the Croatian Companies Act (ZTD art. 21(4)–(5)): company name and seat,
+  registry court and MBS, OIB, share capital, management, bank, IBAN.
+- Closing and signature block are kept together; enclosure and cc lists
+  are not split across pages.
 
-The footer text is in two places — keep them identical:
+## Differences between PDF and DOCX
 
-- `daignostics-letter.latex`: `\dgcompany`
-- `make-reference.py`: `COMPANY`, `LINE1`, `LINE2` (then rerun it)
+- DOCX has no fold/punch marks.
+- DOCX shows the EU emblem and funding sentence at the end of the letter,
+  not in the footer (the footer lives in the reference doc and is the same
+  for every letter).
+- DOCX running header has no reference code, only "Stranica X / Y".
+- Address/reference positions in DOCX are close to, but not exactly on, the
+  DIN 5008 grid (about 1.5 mm higher than the PDF, the same for all three
+  variants); check with a window envelope before mass mailing.
