@@ -162,7 +162,7 @@ function Pandoc(doc)
     local brand
     if file_exists(BRAND_LOGO) then
       brand = pandoc.Inlines({
-        pandoc.Image(pandoc.Inlines("dAIgnostics"), BRAND_LOGO, "", { height = "0.9cm" }),
+        pandoc.Image(pandoc.Inlines("dAIgnostics"), BRAND_LOGO, "", { height = "0.8cm" }),
       })
     else
       brand = pandoc.Inlines({

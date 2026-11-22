@@ -549,15 +549,19 @@ $endif$
 %% ---- Brand logo (registered figurative mark HR Z20251009) -------------
 % daignostics-logo.pdf is used exactly as supplied by Marketing: never
 % redrawn, stretched or recoloured (only scaled by height, aspect kept).
+% It is lowered by 15.5 % of its height (measured) so the lettering, not
+% the descender of the "g", sits on the text baseline.
 % build.sh puts the template folder on TEXINPUTS so it is found from any
 % working directory. If the file is missing, the text wordmark is used.
 \newcommand{\dglogofile}{daignostics-logo.pdf}
 \newcommand{\dgtextwordmark}{{\dgheadingfont\bfseries\large d\textcolor{dgred}{AI}gnostics}}
 \newcommand{\dglogo}[1]{% #1 = logo height
-  \IfFileExists{\dglogofile}{\includegraphics[height=#1]{\dglogofile}}{\dgtextwordmark}}
+  \IfFileExists{\dglogofile}%
+    {\raisebox{-0.155\height}{\includegraphics[height=#1]{\dglogofile}}}%
+    {\dgtextwordmark}}
 
 %% ---- Header / footer brandmark ----------------------------------------
-\newcommand{\dgwordmark}{\dglogo{0.45cm}}
+\newcommand{\dgwordmark}{\dglogo{4.5mm}}
 \newcommand{\dgheaderleft}{$if(header-left)$$header-left$$else$\dgwordmark$endif$}
 \newcommand{\dgfooterleft}{$if(confidential)$\textcolor{dgred}{\footnotesize\scshape Confidential}$else$$if(project)$\textcolor{dgmuted}{\footnotesize $project$}$else$$endif$$endif$}
 
@@ -681,7 +685,7 @@ $else$
 \thispagestyle{empty}
 \dgheadingfont
 \vspace*{0.4cm}
-\noindent{\dglogo{0.9cm}}\hfill$if(project)$\textcolor{dgmuted}{\normalsize $project$}$endif$\par
+\noindent{\dglogo{8mm}}\hfill$if(project)$\textcolor{dgmuted}{\normalsize $project$}$endif$\par
 \vspace{0.3cm}
 \dgaccentbar
 \vfill

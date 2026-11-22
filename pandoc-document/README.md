@@ -14,6 +14,7 @@ every page.
 | `daignostics.latex` | The pandoc template (use with `--template`)                    |
 | `admonitions.lua`   | Filter turning `::: note` fenced divs into styled callout boxes |
 | `daignostics-logo.pdf` | Official dAIgnostics logo (vector), cover + running header — see *Logo* below |
+| `daignostics-logo.svg` | Marketing's vector original of the logo (source of the `.pdf` / `.png`) |
 | `eu-logo.png`       | The EU emblem, trimmed; referenced by every page               |
 | `build.sh`          | One-line build helper                                          |
 | `example.md` / `example.pdf` | Worked example and its output                         |
@@ -54,10 +55,13 @@ the text wordmark, without `eu-logo.png` the emblem is omitted.
 ## Logo
 
 `daignostics-logo.pdf` is the official logo (registered figurative trademark
-HR Z20251009), exported from Marketing's `daignostics-logo.svg`. It is used
-exactly as supplied — only scaled by height (0.9 cm on the cover, 0.45 cm in
-the header), never redrawn, stretched or recoloured. To replace it, replace the
-file; do not edit it.
+HR Z20251009), rendered from Marketing's vector original, kept here as
+`daignostics-logo.svg` (Marketing: *Visuals/daignostics-vector.svg*). The
+Word template uses a PNG rendering of the same file
+(`../pandoc-docx/daignostics-logo.png`). The logo is used exactly as supplied
+— only scaled by height (8 mm on the cover, 4.5 mm in the header), never
+redrawn, stretched or recoloured. To replace it, replace the files; do not
+edit them.
 
 ## Metadata keys (YAML front matter)
 
