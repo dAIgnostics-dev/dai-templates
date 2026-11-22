@@ -1,7 +1,8 @@
 # dAIgnostics documentation template (pandoc → PDF)
 
 A pandoc LaTeX template for software documentation, styled after
-**daignostics.info**: clean white canvas, a single red accent (`#E63946`),
+**daignostics.info**: clean white canvas, the dAIgnostics logo on the cover
+and in the running header, the logo colours (red `#E21E3A`, ink `#303030`),
 geometric Century-Gothic-style headings (TeX Gyre Adventor), and the
 **Co-funded by the European Union** emblem on the cover and in the footer of
 every page.
@@ -12,6 +13,7 @@ every page.
 |---------------------|----------------------------------------------------------------|
 | `daignostics.latex` | The pandoc template (use with `--template`)                    |
 | `admonitions.lua`   | Filter turning `::: note` fenced divs into styled callout boxes |
+| `daignostics-logo.pdf` | Official dAIgnostics logo (vector), cover + running header — see *Logo* below |
 | `eu-logo.png`       | The EU emblem, trimmed; referenced by every page               |
 | `build.sh`          | One-line build helper                                          |
 | `example.md` / `example.pdf` | Worked example and its output                         |
@@ -41,9 +43,21 @@ pandoc mydoc.md \
   -o mydoc.pdf
 ```
 
-Keep `eu-logo.png` next to your document, or point the `eu-logo:` metadata key
-at another path. If the logo file is missing the build still succeeds — it just
-omits the emblem.
+`build.sh` puts the template folder on `TEXINPUTS`, so `daignostics-logo.pdf`
+and `eu-logo.png` are found whichever directory you build from. When calling
+pandoc directly from elsewhere, do the same
+(`TEXINPUTS=/path/to/pandoc-document: pandoc …`), keep the files next to your
+document, or point the `eu-logo:` metadata key at another path. Missing files
+never break the build: without `daignostics-logo.pdf` the cover and header show
+the text wordmark, without `eu-logo.png` the emblem is omitted.
+
+## Logo
+
+`daignostics-logo.pdf` is the official logo (registered figurative trademark
+HR Z20251009), exported from Marketing's `daignostics-logo.svg`. It is used
+exactly as supplied — only scaled by height (0.9 cm on the cover, 0.45 cm in
+the header), never redrawn, stretched or recoloured. To replace it, replace the
+file; do not edit it.
 
 ## Metadata keys (YAML front matter)
 
@@ -62,7 +76,7 @@ numbersections: true
 lang: en                                  # use `hr` for Croatian hyphenation
 eu-logo: "eu-logo.png"                    # path to the EU emblem
 # confidential: true                      # stamps "Confidential" in the footer
-# header-left: "Your Project"             # overrides the dAIgnostics wordmark
+# header-left: "Your Project"             # overrides the logo in the running header
 # funding: "Custom funding acknowledgement text for the cover."
 ---
 ```
@@ -94,8 +108,25 @@ Classes: `note`, `tip`, `info`, `warning`, `important`. The optional
 
 - **Accent colour, fonts, margins** live in the block marked
   `dAIgnostics software-documentation theme` near the top of
-  `daignostics.latex` — edit `\definecolor{dgred}{HTML}{E63946}` to retheme.
+  `daignostics.latex`. `dgred` (`E21E3A`) and `dgink` (`303030`) are the logo
+  colours, the same values the e-mail signature and letterhead rules use —
+  keep them in sync with `../pandoc-docx/make-reference.py`.
 - **Body font** defaults to TeX Gyre Heros. Override per-document with
   `mainfont:` / `monofont:` in YAML, or globally in the template.
-- **Logo placement** is the footer (right) on content pages and the lower-right
-  of the cover. Change the `\fancyfoot[R]` / cover `minipage` blocks to move it.
+- **EU emblem placement** is the footer (right) on content pages and the
+  lower-right of the cover. Change the `\fancyfoot[R]` / cover `minipage`
+  blocks to move it.
+
+## Page breaks
+
+The *Page-break hygiene* block (after the `\titlespacing` lines) keeps headings
+and tables from being stranded at the bottom of a page:
+
+- `\section`, `\subsection`, `\subsubsection` require 26 / 13 / 12 % of the
+  text height to be free, otherwise they start on the next page.
+- A table (`longtable`) needs 11 % free, except directly after a heading:
+  there it stays with the heading (the heading already reserved the room).
+- Widows, orphans and page breaks after a hyphen are forbidden.
+
+If a page now ends with more white space than you like, the percentages are in
+`\Needspace*{…\textheight}`.

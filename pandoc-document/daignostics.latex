@@ -519,8 +519,8 @@ $endif$
 \tcbuselibrary{skins,breakable}
 
 %% ---- Brand palette -----------------------------------------------------
-\definecolor{dgred}{HTML}{E63946}   % dAIgnostics accent
-\definecolor{dgink}{HTML}{1D2733}   % near-black slate (headings/text)
+\definecolor{dgred}{HTML}{E21E3A}   % dAIgnostics accent (logo red)
+\definecolor{dgink}{HTML}{303030}   % near-black (logo ink; headings/text)
 \definecolor{dgslate}{HTML}{2B3A4A} % secondary dark
 \definecolor{dgmuted}{HTML}{5A6B7B} % muted captions / running heads
 \definecolor{dgline}{HTML}{D7DEE4}  % hairlines
@@ -546,8 +546,18 @@ $endif$
     {\raisebox{-0.52cm}[0pt][0pt]{\includegraphics[height=1.25cm]{\dgEUlogo}}}%
     {}}
 
+%% ---- Brand logo (registered figurative mark HR Z20251009) -------------
+% daignostics-logo.pdf is used exactly as supplied by Marketing: never
+% redrawn, stretched or recoloured (only scaled by height, aspect kept).
+% build.sh puts the template folder on TEXINPUTS so it is found from any
+% working directory. If the file is missing, the text wordmark is used.
+\newcommand{\dglogofile}{daignostics-logo.pdf}
+\newcommand{\dgtextwordmark}{{\dgheadingfont\bfseries\large d\textcolor{dgred}{AI}gnostics}}
+\newcommand{\dglogo}[1]{% #1 = logo height
+  \IfFileExists{\dglogofile}{\includegraphics[height=#1]{\dglogofile}}{\dgtextwordmark}}
+
 %% ---- Header / footer brandmark ----------------------------------------
-\newcommand{\dgwordmark}{{\dgheadingfont\bfseries\large d\textcolor{dgred}{AI}gnostics}}
+\newcommand{\dgwordmark}{\dglogo{0.45cm}}
 \newcommand{\dgheaderleft}{$if(header-left)$$header-left$$else$\dgwordmark$endif$}
 \newcommand{\dgfooterleft}{$if(confidential)$\textcolor{dgred}{\footnotesize\scshape Confidential}$else$$if(project)$\textcolor{dgmuted}{\footnotesize $project$}$else$$endif$$endif$}
 
@@ -589,6 +599,44 @@ $endif$
 \titlespacing*{\section}{0pt}{1.7em plus .3em minus .2em}{0.8em}
 \titlespacing*{\subsection}{0pt}{1.3em plus .2em minus .2em}{0.5em}
 \titlespacing*{\subsubsection}{0pt}{1.0em plus .2em minus .2em}{0.4em}
+
+%% ---- Page-break hygiene ------------------------------------------------
+% Keep headings and table starts off the bottom of a page: demand some free
+% space before them, otherwise break first. Patched \AtBeginDocument, after
+% titlesec and any header-includes are done (re)defining \section & co.,
+% so they cannot overwrite the patch.
+\usepackage{needspace}
+\usepackage{etoolbox}
+\AtBeginDocument{%
+  \preto\section{\Needspace*{0.26\textheight}}%
+  \preto\subsection{\Needspace*{0.13\textheight}}%
+  \preto\subsubsection{\Needspace*{0.12\textheight}}% 0.09 left a heading + table split
+}
+% Tables: same idea, except directly after a heading. There the heading's
+% \Needspace has already reserved room, and a forced break (or longtable's
+% own \penalty0 before \LTpre) would leave the heading alone at the bottom.
+% (\LT@start is expl3 code in longtable >= 2024, plain LaTeX before: the
+% patch is tried under both catcode regimes; if neither matches, only the
+% \Needspace part applies.)
+\makeatletter
+\def\dgLTpenalty{\penalty\z@}
+\ifdefined\LT@start
+  \patchcmd\LT@start{\endgraf\penalty\z@\vskip\LTpre}%
+    {\endgraf\dgLTpenalty\vskip\LTpre}{}{%
+    \ExplSyntaxOn
+    \patchcmd\LT@start{\endgraf\penalty\z@\vskip\LTpre}%
+      {\endgraf\dgLTpenalty\vskip\LTpre}{}{}%
+    \ExplSyntaxOff}
+\fi
+\AtBeginDocument{\ifdef{\longtable}{%
+  \AtBeginEnvironment{longtable}{%
+    \if@nobreak\def\dgLTpenalty{\nobreak}%
+    \else\Needspace*{0.11\textheight}\fi}}{}}
+\makeatother
+\widowpenalty=10000
+\clubpenalty=10000
+\displaywidowpenalty=10000
+\brokenpenalty=10000
 
 %% ---- Code blocks -------------------------------------------------------
 % pandoc's highlighted code lives in the Shaded environment; restyle it as
@@ -633,7 +681,7 @@ $else$
 \thispagestyle{empty}
 \dgheadingfont
 \vspace*{0.4cm}
-\noindent{\dgwordmark}\hfill$if(project)$\textcolor{dgmuted}{\normalsize $project$}$endif$\par
+\noindent{\dglogo{0.9cm}}\hfill$if(project)$\textcolor{dgmuted}{\normalsize $project$}$endif$\par
 \vspace{0.3cm}
 \dgaccentbar
 \vfill

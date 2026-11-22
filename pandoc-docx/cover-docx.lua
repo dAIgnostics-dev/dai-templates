@@ -5,7 +5,7 @@
 -- this filter builds the cover of ../pandoc-document/daignostics.latex from
 -- the same YAML keys and prepends it to the body:
 --
---   wordmark ............................................. project
+--   logo ................................................. project
 --   ════════════════════════════ (red bar) ══════════════════════
 --   DOCTYPE
 --   Title
@@ -31,6 +31,18 @@
 if not FORMAT:match("docx") then return {} end
 
 local stringify = pandoc.utils.stringify
+
+-- Official logo (registered figurative mark HR Z20251009), next to this
+-- filter. Used as supplied - only scaled by height, never redrawn, stretched
+-- or recoloured. Without the file the cover keeps the text wordmark.
+local BRAND_LOGO = pandoc.path.join({ pandoc.path.directory(PANDOC_SCRIPT_FILE),
+                                      "daignostics-logo.png" })
+
+local function file_exists(path)
+  local f = io.open(path, "rb")
+  if f then f:close() return true end
+  return false
+end
 
 local labels = {
   en = { author = "Author(s)", version = "Version", date = "Date",
@@ -147,11 +159,18 @@ function Pandoc(doc)
 
   -- ---- cover --------------------------------------------------------
   if meta.title then
-    local brand = pandoc.Inlines({
-      span("Wordmark", pandoc.Inlines("d")),
-      span("Brand Accent", pandoc.Inlines("AI")),
-      span("Wordmark", pandoc.Inlines("gnostics")),
-    })
+    local brand
+    if file_exists(BRAND_LOGO) then
+      brand = pandoc.Inlines({
+        pandoc.Image(pandoc.Inlines("dAIgnostics"), BRAND_LOGO, "", { height = "0.9cm" }),
+      })
+    else
+      brand = pandoc.Inlines({
+        span("Wordmark", pandoc.Inlines("d")),
+        span("Brand Accent", pandoc.Inlines("AI")),
+        span("Wordmark", pandoc.Inlines("gnostics")),
+      })
+    end
     if meta.project then
       brand:insert(tab())
       brand:extend(inlines_of(meta.project))
